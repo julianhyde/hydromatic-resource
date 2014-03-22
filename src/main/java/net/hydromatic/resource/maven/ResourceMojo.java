@@ -43,7 +43,8 @@ public class ResourceMojo extends AbstractCodeGeneratorMojo {
     FileWriter out = new FileWriter(new File(pd, "Resources.java"));
     try {
       final URL resource =
-          ResourceMojo.class.getResource("/Resources.java.template");
+          ResourceMojo.class.getResource(
+              "/resources/net/hydromatic/resource/Resources.java");
       final InputStream in = resource.openStream();
       final InputStreamReader reader = new InputStreamReader(in);
       final StringBuilder sb = new StringBuilder();
@@ -57,7 +58,8 @@ public class ResourceMojo extends AbstractCodeGeneratorMojo {
       }
       in.close();
       reader.close();
-      replaceAll(sb, "<%package%>", packageName);
+      replaceAll(sb, "package net.hydromatic.resource;",
+          "package " + packageName + ";");
       out.append(sb.toString());
     } finally {
       out.flush();
