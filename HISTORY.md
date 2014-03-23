@@ -4,6 +4,7 @@ For a full list of releases, see <a href="https://github.com/julianhyde/hydromat
 
 ## <a href="https://github.com/julianhyde/hydromatic-resource/releases/tag/hydromatic-resource-0.2">0.2</a> / 2014-03-23
 
+* Eclipse integration: Add m2e lifecycle mapping.
 * Fix <a href="https://github.com/julianhyde/optiq/issues/192">optiq #192</a>,
  "Remove dependency of Resources on Jackson".
 * Remove template, and instead copy `Resources.java` source file out of jar.
