@@ -44,7 +44,7 @@ public class ResourceMojo extends AbstractCodeGeneratorMojo {
     try {
       final URL resource =
           ResourceMojo.class.getResource(
-              "/resources/net/hydromatic/resource/Resources.java");
+              "/net/hydromatic/resource/Resources.java");
       final InputStream in = resource.openStream();
       final InputStreamReader reader = new InputStreamReader(in);
       final StringBuilder sb = new StringBuilder();
