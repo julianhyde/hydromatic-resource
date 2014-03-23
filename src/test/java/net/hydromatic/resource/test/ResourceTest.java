@@ -78,7 +78,7 @@ public class ResourceTest {
   /** Tests that get validation error if bundle does not contain resource. */
   @Test public void testValidateBundleHasResource() {
     try {
-      Resources.validate(fooResource,
+      fooResource.onlyInClass().validate(
           EnumSet.of(Validation.BUNDLE_HAS_RESOURCE));
       fail("should have thrown");
     } catch (AssertionError e) {
@@ -112,9 +112,10 @@ public class ResourceTest {
     }
   }
 
-  @Test public void testValidateMessageMatch() {
+  @Test public void testValidateMessageMatchDifferentMessageInPropertiesFile() {
     try {
-      Resources.validate(fooResource, EnumSet.of(Validation.MESSAGE_MATCH));
+      fooResource.differentMessageInPropertiesFile().validate(
+          EnumSet.of(Validation.MESSAGE_MATCH));
       fail("should have thrown");
     } catch (AssertionError e) {
       assertThat(e.getMessage(),
