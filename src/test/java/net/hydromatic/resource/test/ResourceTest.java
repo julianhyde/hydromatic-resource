@@ -180,6 +180,35 @@ public class ResourceTest {
     }
   }
 
+  @Test public void testDeduceExceptionType() throws NoSuchMethodException {
+    // Parse "ExInst<MyException>" --> "MyException"
+    final Method method = FooResource.class.getMethod("myException");
+    assertThat(
+        Resources.ExInstWithCause.getExceptionClass(
+            method.getGenericReturnType()),
+        equalTo((Class) MyException.class));
+  }
+
+  @Test public void testDeduceExceptionType2() throws NoSuchMethodException {
+    // Parse "MyExInst<NumberFormatException>" --> "NumberFormatException"
+    final Method method =
+        FooResource.class.getMethod("customParameterizedExceptionClass");
+    assertThat(
+        Resources.ExInstWithCause.getExceptionClass(
+            method.getGenericReturnType()),
+        equalTo((Class) NumberFormatException.class));
+  }
+
+  @Test public void testDeduceExceptionType3() throws NoSuchMethodException {
+    // Parse "MyExInstImpl extends MyExInst<IllegalStateException>"
+    // --> "IllegalStateException"
+    final Method method = FooResource.class.getMethod("exceptionSuperChain");
+    assertThat(
+        Resources.ExInstWithCause.getExceptionClass(
+            method.getGenericReturnType()),
+        equalTo((Class) IllegalStateException.class));
+  }
+
   // TODO: check that each resource in the bundle is used by precisely
   //  one method
 
@@ -194,9 +223,15 @@ public class ResourceTest {
 
   /** Abstract class used to test identification of exception classes via
    * superclass chains */
-  public abstract static class MyExInst<W extends Exception> extends
-      ExInst<W> {
+  public abstract static class MyExInst<W extends Exception> extends ExInst<W> {
     public MyExInst(String base, Locale locale, Method method, Object... args) {
+      super(base, locale, method, args);
+    }
+  }
+
+  public static class MyConcreteExInst<W extends Exception> extends ExInst<W> {
+    public MyConcreteExInst(String base, Locale locale, Method method,
+        Object... args) {
       super(base, locale, method, args);
     }
   }
@@ -245,6 +280,7 @@ public class ResourceTest {
     @BaseMessage("should return inst")
     String shouldReturnInst();
 
+    @BaseMessage("exception isn''t throwable")
     ExInst<MyException> myException();
 
     @BaseMessage("Can't use odd quotes")
@@ -258,6 +294,9 @@ public class ResourceTest {
 
     @BaseMessage("argument {0} does not match {1,number,#}")
     Inst mismatchedArguments(String s, int i, String s2);
+
+    @BaseMessage("custom parameterized exception class")
+    MyConcreteExInst<NumberFormatException> customParameterizedExceptionClass();
 
     @BaseMessage("super chain exception")
     MyExInstImpl exceptionSuperChain();

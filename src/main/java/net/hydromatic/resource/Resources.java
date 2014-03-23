@@ -17,9 +17,6 @@
 */
 package net.hydromatic.resource;
 
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.type.TypeFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Retention;
@@ -328,7 +325,8 @@ public class Resources {
     public T ex(Throwable cause) {
       try {
         //noinspection unchecked
-        final Class<T> exceptionClass = getExceptionClass();
+        final Class<T> exceptionClass =
+            getExceptionClass(method.getGenericReturnType());
         Constructor<T> constructor;
         final String str = str();
         boolean causeInConstructor = false;
@@ -375,28 +373,36 @@ public class Resources {
       }
     }
 
-    private Class<T> getExceptionClass() {
-      // Get exception type from ExInstWithCause<MyException> type parameter
+    public static Class getExceptionClass(Type type) {
+      // Get exception type from ExInstWithCause<MyException> type parameter.
       // ExInstWithCause might be one of super classes.
-      // That is why we need findTypeParameters to find ExInstWithCause in
-      // superclass chain
+      // And, this class may be a parameter-less sub-class of a generic base.
+      //
+      // NOTE: We used to use
+      // com.fasterxml.jackson.databind.type.TypeFactory.findTypeParameters.
+      // More powerful, but we can't afford an extra dependency.
 
-      Type type = method.getGenericReturnType();
-      TypeFactory typeFactory = TypeFactory.defaultInstance();
-      JavaType[] args = typeFactory.findTypeParameters(
-          typeFactory.constructType(type), ExInstWithCause.class);
-      if (args == null) {
-        throw new IllegalStateException("Unable to find superclass"
-            + " ExInstWithCause for " + type);
+      final Type type0 = type;
+      for (;;) {
+        if (type instanceof ParameterizedType) {
+          final Type[] types =
+              ((ParameterizedType) type).getActualTypeArguments();
+          if (types.length >= 1
+              && types[0] instanceof Class
+              && Throwable.class.isAssignableFrom((Class) types[0])) {
+            return (Class) types[0];
+          }
+          throw new IllegalStateException(
+              "Unable to find superclass ExInstWithCause for " + type);
+        }
+        if (type instanceof Class) {
+          type = ((Class) type).getGenericSuperclass();
+          if (type == null) {
+            throw new IllegalStateException(
+                "Unable to find superclass ExInstWithCause for " + type0);
+          }
+        }
       }
-      // Update this if ExInstWithCause gets more type parameters
-      // For instance if B and C are added ExInstWithCause<A, B, C>,
-      // code below should be updated
-      if (args.length != 1) {
-        throw new IllegalStateException("ExInstWithCause should have"
-            + " exactly one type parameter");
-      }
-      return (Class<T>) args[0].getRawClass();
     }
 
     protected void validateException(Callable<Exception> exSupplier) {
