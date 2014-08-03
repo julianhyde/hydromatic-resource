@@ -72,7 +72,7 @@ public class Resources {
         new Class[] {clazz},
         new InvocationHandler() {
           public Object invoke(Object proxy, Method method, Object[] args)
-            throws Throwable {
+              throws Throwable {
             if (method.equals(BuiltinMethod.OBJECT_TO_STRING.method)) {
               return toString();
             }
