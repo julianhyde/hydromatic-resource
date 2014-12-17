@@ -17,11 +17,10 @@
 */
 package net.hydromatic.resource.maven;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
+import org.codehaus.plexus.util.FileUtils;
+import org.codehaus.plexus.util.IOUtil;
+
+import java.io.*;
 
 /**
  * Generates a Resources class.
@@ -38,51 +37,36 @@ public class ResourceMojo extends AbstractCodeGeneratorMojo {
 
   @Override protected void generate() throws Exception {
     File pd = new File(outputDirectory, packageName.replaceAll("\\.", "/"));
+    if (getLog().isDebugEnabled()) {
+      getLog().info("Creating directory " + pd);
+    }
     pd.mkdirs();
 
-    FileWriter out = new FileWriter(new File(pd, "Resources.java"));
+    InputStream in = null;
     try {
-      final URL resource =
-          ResourceMojo.class.getResource(
+      in = ResourceMojo.class.getResourceAsStream(
               "/net/hydromatic/resource/Resources.java");
-      final InputStream in = resource.openStream();
-      final InputStreamReader reader = new InputStreamReader(in);
-      final StringBuilder sb = new StringBuilder();
-      char[] chars = new char[1024];
-      for (;;) {
-        final int n = reader.read(chars);
-        if (n < 0) {
-          break;
-        }
-        sb.append(chars, 0, n);
-      }
-      in.close();
-      reader.close();
-      replaceAll(sb, "package net.hydromatic.resource;",
+      String template = IOUtil.toString(in, "UTF-8");
+      template = template.replace("package net.hydromatic.resource;",
           "package " + packageName + ";");
-      out.append(sb.toString());
+      saveResult(new File(pd, "Resources.java"), template);
     } finally {
-      out.flush();
-      out.close();
-    }
-
-    if (getLog().isDebugEnabled()) {
-      getLog().debug("Resources.java");
+      if (in != null) {
+        in.close();
+      }
     }
   }
 
-  private void replaceAll(StringBuilder sb, String find, String replace) {
-    if (find.length() == 0) {
-      return;
-    }
-
-    for (int i = sb.length(); i >= 0;) {
-      i = sb.lastIndexOf(find, i);
-      if (i < 0) {
+  private void saveResult(File file, String contents) throws IOException {
+    if (file.exists()) {
+      String prevContents = FileUtils.fileRead(file, "UTF-8");
+      if (contents.equals(prevContents)) {
+        getLog().info(file + " is up to date");
         return;
       }
-      sb.replace(i, i + find.length(), replace);
     }
+    getLog().info("Creating " + file);
+    FileUtils.fileWrite(file, "UTF-8", contents);
   }
 }
 
