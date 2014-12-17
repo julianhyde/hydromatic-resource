@@ -4,6 +4,7 @@ For a full list of releases, see <a href="https://github.com/julianhyde/hydromat
 
 ## <a href="https://github.com/julianhyde/hydromatic-resource/releases/tag/hydromatic-resource-0.3">0.3</a> / 2014-12-17
 
+* Fix maven-release-plugin git integration
 * Skip overwrite of the destination file if the produced contents are the same
   (Vladimir Sitnikov)
 * Upgrade dependencies; fix license
