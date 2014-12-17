@@ -4,7 +4,7 @@
   <!-- The basics. -->
   <groupId>net.hydromatic</groupId>
   <artifactId>hydromatic-resource-maven-plugin</artifactId>
-  <version>0.3-SNAPSHOT</version>
+  <version>0.3</version>
   <packaging>maven-plugin</packaging>
 
   <!-- More project information. -->
@@ -70,7 +70,7 @@
     <connection>scm:git:git://github.com/julianhyde/hydromatic-resource.git</connection>
     <developerConnection>scm:git:git@github.com:julianhyde/hydromatic-resource.git</developerConnection>
     <url>http://github.com/julianhyde/hydromatic-resource/tree/master</url>
-    <tag>HEAD</tag>
+    <tag>hydromatic-resource-maven-plugin-0.3</tag>
   </scm>
 
   <dependencies>
