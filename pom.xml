@@ -8,7 +8,7 @@
   </parent>
 
   <artifactId>hydromatic-resource-maven-plugin</artifactId>
-  <version>0.4-SNAPSHOT</version>
+  <version>0.4</version>
   <packaging>maven-plugin</packaging>
 
   <name>hydromatic-resource</name>
@@ -57,7 +57,7 @@
     <top.dir>${project.basedir}</top.dir>
   </properties>
 
-  <distributionManagement/>
+  <distributionManagement />
 
   <issueManagement>
     <system>github</system>
@@ -68,7 +68,7 @@
     <connection>scm:git:git://github.com/julianhyde/hydromatic-resource.git</connection>
     <developerConnection>scm:git:git@github.com:julianhyde/hydromatic-resource.git</developerConnection>
     <url>http://github.com/julianhyde/hydromatic-resource/tree/master</url>
-    <tag>HEAD</tag>
+    <tag>hydromatic-resource-maven-plugin-0.4</tag>
   </scm>
 
   <dependencies>
