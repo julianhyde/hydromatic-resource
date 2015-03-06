@@ -2,6 +2,13 @@
 
 For a full list of releases, see <a href="https://github.com/julianhyde/hydromatic-resource/releases">github</a>.
 
+## <a href="https://github.com/julianhyde/hydromatic-resource/releases/tag/hydromatic-resource-0.4">0.4</a> / 2015-03-05
+
+* Publish releases to <a href="http://search.maven.org/">Maven Central</a>
+  (previous releases are in <a href="http://www.conjars.org/">Conjars</a>)
+* Sign jars
+* Use <a href="https://github.com/julianhyde/hydromatic-parent">net.hydromatic parent POM</a>
+
 ## <a href="https://github.com/julianhyde/hydromatic-resource/releases/tag/hydromatic-resource-0.3">0.3</a> / 2014-12-17
 
 * Fix maven-release-plugin git integration
