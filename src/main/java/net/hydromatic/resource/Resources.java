@@ -72,6 +72,44 @@ public class Resources {
     return MAP_THREAD_TO_LOCALE.get();
   }
 
+  /** Creates an instance of the resource object, using the class's name as
+   * the name of the resource file.
+   *
+   * @see #create(String, Class)
+   */
+  public static <T> T create(Class<T> clazz) {
+    return create(clazz.getCanonicalName(), clazz);
+  }
+
+  /** Creates an instance of the resource object.
+   *
+   * <p>The resource interface has methods that return {@link Inst} and
+   * {@link ExInst} values. Each of those methods is basically a factory method.
+   *
+   * <p>This method creates an instance of that interface backed by a resource
+   * bundle, using a dynamic proxy ({@link Proxy}).
+   *
+   * <p>Suppose that base = "com.example.MyResource" and the current locale is
+   * "en_US". A method
+   *
+   * <blockquote>
+   *     &x64;BaseMessage("Illegal binary string {0}")
+   *     ExInst&lt;IllegalArgumentException&gt; illegalBinaryString(String a0);
+   * </blockquote>
+   *
+   * will look up a resource "IllegalBinaryString" from the resource file
+   * "com/example/MyResource_en_US.properties", and substitute in the parameter
+   * value {@code a0}.
+   *
+   * <p>The resource in the properties file may or may not be equal to the
+   * base message "Illegal binary string {0}". But in the base locale, it
+   * probably should be.
+   *
+   * @param base Base name of the resource.properties file
+   * @param clazz Interface that contains a method for each resource
+   * @return Instance of the interface that can be used to instantiate
+   * resources
+   */
   public static <T> T create(final String base, Class<T> clazz) {
     //noinspection unchecked
     return (T) Proxy.newProxyInstance(clazz.getClassLoader(),
