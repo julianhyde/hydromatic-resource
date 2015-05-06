@@ -21,5 +21,7 @@ $ mvn package
 * Blog: http://julianhyde.blogspot.com
 * Project page: http://www.hydromatic.net/hydromatic-resource
 * Source code: http://github.com/julianhyde/hydromatic-resource
-* Developers list: http://groups.google.com/group/optiq-dev
+* Developers list: <a href="mailto:dev@calcite.incubator.apache.org">dev at calcite.incubator.apache.org</a>
+  (<a href="http://mail-archives.apache.org/mod_mbox/incubator-calcite-dev/">archive</a>,
+  <a href="mailto:dev-subscribe@calcite.incubator.apache.org">subscribe</a>)
 * <a href="HISTORY.md">Release notes and history</a>

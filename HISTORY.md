@@ -2,6 +2,13 @@
 
 For a full list of releases, see <a href="https://github.com/julianhyde/hydromatic-resource/releases">github</a>.
 
+## <a href="https://github.com/julianhyde/hydromatic-resource/releases/tag/hydromatic-resource-0.5">0.5</a> / 2015-05-06
+
+* [<a href="https://github.com/julianhyde/hydromatic-resource/issues/1">RESOURCE-1</a>]
+  Javadoc generation fails under JDK 1.8
+* Add `Resources.create(Class)` method
+* Improve javadoc
+
 ## <a href="https://github.com/julianhyde/hydromatic-resource/releases/tag/hydromatic-resource-0.4">0.4</a> / 2015-03-05
 
 * Publish releases to <a href="http://search.maven.org/">Maven Central</a>
