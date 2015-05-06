@@ -84,7 +84,8 @@ public class ResourceTest {
     } catch (AssertionError e) {
       assertThat(e.getMessage(),
           startsWith(
-              "key 'OnlyInClass' not found for resource 'onlyInClass' in bundle 'java.util.PropertyResourceBundle@"));
+              "key 'OnlyInClass' not found for resource 'onlyInClass' in "
+              + "bundle 'java.util.PropertyResourceBundle@"));
     }
   }
 

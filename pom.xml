@@ -170,4 +170,31 @@
     </plugins>
   </build>
 
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <links>
+            <link>http://docs.oracle.com/javase/8/docs/api/</link>
+          </links>
+          <excludePackageNames>org.apache.calcite.sql.parser.impl</excludePackageNames>
+          <tags>
+            <tag>
+              <name>goal</name>
+              <placement>a</placement>
+              <head>Goal:</head>
+            </tag>
+            <tag>
+              <name>phase</name>
+              <placement>a</placement>
+              <head>Phase:</head>
+            </tag>
+          </tags>
+        </configuration>
+      </plugin>
+    </plugins>
+  </reporting>
+
 </project>
