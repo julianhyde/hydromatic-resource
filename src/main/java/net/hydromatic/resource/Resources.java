@@ -76,6 +76,11 @@ public class Resources {
    * the name of the resource file.
    *
    * @see #create(String, Class)
+   *
+   * @param <T> Resource type
+   * @param clazz Interface that contains a method for each resource
+   * @return Instance of the interface that can be used to instantiate
+   * resources
    */
   public static <T> T create(Class<T> clazz) {
     return create(clazz.getCanonicalName(), clazz);
@@ -93,7 +98,7 @@ public class Resources {
    * "en_US". A method
    *
    * <blockquote>
-   *     &x64;BaseMessage("Illegal binary string {0}")
+   *     &#64;BaseMessage("Illegal binary string {0}")
    *     ExInst&lt;IllegalArgumentException&gt; illegalBinaryString(String a0);
    * </blockquote>
    *
@@ -105,6 +110,7 @@ public class Resources {
    * base message "Illegal binary string {0}". But in the base locale, it
    * probably should be.
    *
+   * @param <T> Resource type
    * @param base Base name of the resource.properties file
    * @param clazz Interface that contains a method for each resource
    * @return Instance of the interface that can be used to instantiate

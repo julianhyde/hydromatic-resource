@@ -2,6 +2,11 @@
 
 For a full list of releases, see <a href="https://github.com/julianhyde/hydromatic-resource/releases">github</a>.
 
+## <a href="https://github.com/julianhyde/hydromatic-resource/releases/tag/hydromatic-resource-0.5.1">0.5.1</a> / 2015-05-06
+
+* [<a href="https://github.com/julianhyde/hydromatic-resource/issues/5">RESOURCE-5</a>]
+  Bad HTML entity in javadoc
+
 ## <a href="https://github.com/julianhyde/hydromatic-resource/releases/tag/hydromatic-resource-0.5">0.5</a> / 2015-05-06
 
 * [<a href="https://github.com/julianhyde/hydromatic-resource/issues/1">RESOURCE-1</a>]
