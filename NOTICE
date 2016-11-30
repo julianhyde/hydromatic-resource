@@ -1,6 +1,6 @@
 hydromatic-resource
-Compiler-checked wrappers around resource files.
-Copyright (C) 2014-2015 Julian Hyde
+Compiler-checked wrappers around resource and properties files.
+Copyright (C) 2014-2016 Julian Hyde
 
 ===============================================================================
 Licensed under the Apache License, Version 2.0 (the "License");
