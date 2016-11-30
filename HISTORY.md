@@ -2,6 +2,13 @@
 
 For a full list of releases, see <a href="https://github.com/julianhyde/hydromatic-resource/releases">github</a>.
 
+## <a href="https://github.com/julianhyde/hydromatic-resource/releases/tag/hydromatic-resource-0.6">0.6</a> / 2016-11-30
+
+* [<a href="https://github.com/julianhyde/hydromatic-resource/issues/5">RESOURCE-6</a>]
+  Wrap `Properties`, in addition to `ResourceBundle`s
+* Drop support for JDK 1.5
+* File headers, and document maven coordinates
+
 ## <a href="https://github.com/julianhyde/hydromatic-resource/releases/tag/hydromatic-resource-0.5.1">0.5.1</a> / 2015-05-06
 
 * [<a href="https://github.com/julianhyde/hydromatic-resource/issues/5">RESOURCE-5</a>]

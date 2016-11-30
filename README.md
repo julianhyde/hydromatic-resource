@@ -2,26 +2,26 @@
 
 # hydromatic-resource
 
-Compiler-checked wrappers around resource files.
+Compiler-checked wrappers around resource and property files.
 
 ## Get hydromatic-resource
 
 ### From Maven
 
 Get hydromatic-resource from
-<a href="https://search.maven.org/#search%7Cga%7C1%7Cg%3Anet.hydromatic%20a%3Afoodmart-data-hsqldb">Maven Central</a>:
+<a href="https://search.maven.org/#search%7Cga%7C1%7Cg%3Anet.hydromatic%20a%3Ahydromatic-resource-maven-plugin">Maven Central</a>:
 
 ```xml
 <dependency>
   <groupId>net.hydromatic</groupId>
   <artifactId>hydromatic-resource-maven-plugin</artifactId>
-  <version>0.5</version>
+  <version>0.6</version>
 </dependency>
 ```
 
 ### Download and build
 
-You need Java (1.6 or higher; 1.8 preferred), git and maven (3.0.4 or later).
+You need Java (1.6 or higher; 1.8 preferred), git and maven (3.2.1 or later).
 
 ```bash
 $ git clone git://github.com/julianhyde/hydromatic-resource.git
@@ -29,9 +29,14 @@ $ cd hydromatic-resource
 $ mvn package
 ```
 
+### Make a release
+
+Using JDK 1.7, follow instructions in
+[hydromatic-parent](https://github.com/julianhyde/hydromatic-parent).
+
 ## More information
 
-* License: Apache License, Version 2.0.
+* License: Apache License, Version 2.0
 * Author: Julian Hyde
 * Blog: http://julianhyde.blogspot.com
 * Project page: http://www.hydromatic.net/hydromatic-resource
