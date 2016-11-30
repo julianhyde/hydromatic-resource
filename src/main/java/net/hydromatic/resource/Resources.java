@@ -18,12 +18,15 @@ package net.hydromatic.resource;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.*;
 import java.text.*;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Defining wrapper classes around resources that allow the compiler to check
@@ -115,27 +118,75 @@ public class Resources {
    * @return Instance of the interface that can be used to instantiate
    * resources
    */
-  public static <T> T create(final String base, Class<T> clazz) {
+  public static <T> T create(String base, Class<T> clazz) {
+    return create(base, EmptyPropertyAccessor.INSTANCE, clazz);
+  }
+
+  /** Creates an instance of the resource object that can access properties
+   * but not resources. */
+  public static <T> T create(PropertyAccessor accessor, Class<T> clazz) {
+    return create(null, accessor, clazz);
+  }
+
+  /** Creates an instance of the resource object that can access properties
+   * but not resources. */
+  public static <T> T create(final Properties properties, Class<T> clazz) {
+    return create(null, new PropertiesAccessor(properties), clazz);
+  }
+
+  private static <T> T create(final String base,
+      final PropertyAccessor accessor, Class<T> clazz) {
     //noinspection unchecked
     return (T) Proxy.newProxyInstance(clazz.getClassLoader(),
         new Class[] {clazz},
         new InvocationHandler() {
+          final Map<String, Object> cache =
+              new ConcurrentHashMap<String, Object>();
+
           public Object invoke(Object proxy, Method method, Object[] args)
               throws Throwable {
+            if (args == null || args.length == 0) {
+              Object o = cache.get(method.getName());
+              if (o == null) {
+                o = create(method, args);
+                cache.put(method.getName(), o);
+              }
+              return o;
+            }
+            return create(method, args);
+          }
+
+          private Object create(Method method, Object[] args)
+              throws NoSuchMethodException, InstantiationException,
+              IllegalAccessException, InvocationTargetException {
             if (method.equals(BuiltinMethod.OBJECT_TO_STRING.method)) {
               return toString();
             }
             final Class<?> returnType = method.getReturnType();
-            final Class[] types = {
-              String.class, Locale.class, Method.class, Object[].class
-            };
-            final Constructor<?> constructor =
-                returnType.getConstructor(types);
-            return constructor.newInstance(
-                base,
-                Resources.getThreadOrDefaultLocale(),
-                method,
-                args != null ? args : new Object[0]);
+            try {
+              if (Inst.class.isAssignableFrom(returnType)) {
+                final Constructor<?> constructor =
+                    returnType.getConstructor(String.class, Locale.class,
+                        Method.class, Object[].class);
+                final Locale locale = Resources.getThreadOrDefaultLocale();
+                return constructor.newInstance(base, locale, method,
+                    args != null ? args : new Object[0]);
+              } else {
+                final Constructor<?> constructor =
+                    returnType.getConstructor(PropertyAccessor.class,
+                        Method.class);
+                return constructor.newInstance(accessor, method);
+              }
+            } catch (InvocationTargetException e) {
+              final Throwable e2 = e.getTargetException();
+              if (e2 instanceof RuntimeException) {
+                throw (RuntimeException) e2;
+              }
+              if (e2 instanceof Error) {
+                throw (Error) e2;
+              }
+              throw e;
+            }
           }
         });
   }
@@ -200,19 +251,39 @@ public class Resources {
     return o0 == o1 || o0 != null && o0.equals(o1);
   }
 
+  /** Element in a resource (either a resource or a property). */
+  public static class Element {
+    protected final Method method;
+    protected final String key;
+
+    public Element(Method method) {
+      this.method = method;
+      this.key = deriveKey();
+    }
+
+    protected String deriveKey() {
+      final Resource resource = method.getAnnotation(Resource.class);
+      if (resource != null) {
+        return resource.value();
+      } else {
+        final String name = method.getName();
+        return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+      }
+    }
+  }
+
   /** Resource instance. It contains the resource method (which
    * serves to identify the resource), the locale with which we
    * expect to render the resource, and any arguments. */
-  public static class Inst {
-    protected final String base;
+  public static class Inst extends Element {
     private final Locale locale;
-    protected final Method method;
+    protected final String base;
     protected final Object[] args;
 
     public Inst(String base, Locale locale, Method method, Object... args) {
+      super(method);
       this.base = base;
       this.locale = locale;
-      this.method = method;
       this.args = args;
     }
 
@@ -240,7 +311,6 @@ public class Resources {
     public void validate(EnumSet<Validation> validations) {
       final ResourceBundle bundle = bundle();
       for (Validation validation : validations) {
-        final String key = key();
         switch (validation) {
         case BUNDLE_HAS_RESOURCE:
           if (!bundle.containsKey(key)) {
@@ -336,21 +406,11 @@ public class Resources {
 
     public String raw() {
       try {
-        return bundle().getString(key());
+        return bundle().getString(key);
       } catch (MissingResourceException e) {
         // Resource is not in the bundle. (It is probably missing from the
         // .properties file.) Fall back to the base message.
         return method.getAnnotation(BaseMessage.class).value();
-      }
-    }
-
-    private String key() {
-      final Resource resource = method.getAnnotation(Resource.class);
-      if (resource != null) {
-        return resource.value();
-      } else {
-        final String name = method.getName();
-        return Character.toUpperCase(name.charAt(0)) + name.substring(1);
       }
     }
 
@@ -525,6 +585,227 @@ public class Resources {
     }
   }
 
+  /** Property instance. */
+  public abstract static class Prop extends Element {
+    protected final PropertyAccessor accessor;
+    protected final boolean hasDefault;
+
+    public Prop(PropertyAccessor accessor, Method method) {
+      super(method);
+      this.accessor = accessor;
+      final Default resource = method.getAnnotation(Default.class);
+      this.hasDefault = resource != null;
+    }
+
+    public boolean isSet() {
+      return accessor.isSet(this);
+    }
+
+    public boolean hasDefault() {
+      return hasDefault;
+    }
+
+    void checkDefault() {
+      if (!hasDefault) {
+        throw new NoDefaultValueException("Property " + key
+            + " has no default value");
+      }
+    }
+
+    void checkDefault2() {
+      if (!hasDefault) {
+        throw new NoDefaultValueException("Property " + key
+            + " is not set and has no default value");
+      }
+    }
+  }
+
+  /** Integer property instance. */
+  public static class IntProp extends Prop {
+    private final int defaultValue;
+
+    public IntProp(PropertyAccessor accessor, Method method) {
+      super(accessor, method);
+      if (hasDefault) {
+        final Default resource = method.getAnnotation(Default.class);
+        defaultValue = Integer.parseInt(resource.value(), 10);
+      } else {
+        defaultValue = 0;
+      }
+    }
+
+    /** Returns the value of this integer property. */
+    public int get() {
+      return accessor.intValue(this);
+    }
+
+    /** Returns the value of this integer property, returning the given default
+     * value if the property is not set. */
+    public int get(int defaultValue) {
+      return accessor.intValue(this, defaultValue);
+    }
+
+    public int defaultValue() {
+      checkDefault();
+      return defaultValue;
+    }
+  }
+
+  /** Boolean property instance. */
+  public static class BooleanProp extends Prop {
+    private final boolean defaultValue;
+
+    public BooleanProp(PropertyAccessor accessor, Method method) {
+      super(accessor, method);
+      if (hasDefault) {
+        final Default resource = method.getAnnotation(Default.class);
+        defaultValue = Boolean.parseBoolean(resource.value());
+      } else {
+        defaultValue = false;
+      }
+    }
+
+    /** Returns the value of this boolean property. */
+    public boolean get() {
+      return accessor.booleanValue(this);
+    }
+
+    /** Returns the value of this boolean property, returning the given default
+     * value if the property is not set. */
+    public boolean get(boolean defaultValue) {
+      return accessor.booleanValue(this, defaultValue);
+    }
+
+    public boolean defaultValue() {
+      checkDefault();
+      return defaultValue;
+    }
+  }
+
+  /** Double property instance. */
+  public static class DoubleProp extends Prop {
+    private final double defaultValue;
+
+    public DoubleProp(PropertyAccessor accessor, Method method) {
+      super(accessor, method);
+      if (hasDefault) {
+        final Default resource = method.getAnnotation(Default.class);
+        defaultValue = Double.parseDouble(resource.value());
+      } else {
+        defaultValue = 0d;
+      }
+    }
+
+    /** Returns the value of this double property. */
+    public double get() {
+      return accessor.doubleValue(this);
+    }
+
+    /** Returns the value of this double property, returning the given default
+     * value if the property is not set. */
+    public double get(double defaultValue) {
+      return accessor.doubleValue(this, defaultValue);
+    }
+
+    public double defaultValue() {
+      checkDefault();
+      return defaultValue;
+    }
+  }
+
+  /** String property instance. */
+  public static class StringProp extends Prop {
+    private final String defaultValue;
+
+    public StringProp(PropertyAccessor accessor, Method method) {
+      super(accessor, method);
+      if (hasDefault) {
+        final Default resource = method.getAnnotation(Default.class);
+        defaultValue = resource.value();
+      } else {
+        defaultValue = null;
+      }
+    }
+
+    /** Returns the value of this String property. */
+    public String get() {
+      return accessor.stringValue(this);
+    }
+
+    /** Returns the value of this String property, returning the given default
+     * value if the property is not set. */
+    public String get(String defaultValue) {
+      return accessor.stringValue(this, defaultValue);
+    }
+
+    public String defaultValue() {
+      checkDefault();
+      return defaultValue;
+    }
+  }
+
+  /** Thrown when a default value is needed but a property does not have
+   * one. */
+  public static class NoDefaultValueException extends RuntimeException {
+    NoDefaultValueException(String message) {
+      super(message);
+    }
+  }
+
+  /** Means by which a resource can get values of properties, given their
+   * name. */
+  public interface PropertyAccessor {
+    boolean isSet(Prop p);
+    int intValue(IntProp p);
+    int intValue(IntProp p, int defaultValue);
+    String stringValue(StringProp p);
+    String stringValue(StringProp p, String defaultValue);
+    boolean booleanValue(BooleanProp p);
+    boolean booleanValue(BooleanProp p, boolean defaultValue);
+    double doubleValue(DoubleProp p);
+    double doubleValue(DoubleProp p, double defaultValue);
+  }
+
+  enum EmptyPropertyAccessor implements PropertyAccessor {
+    INSTANCE;
+
+    public boolean isSet(Prop p) {
+      return false;
+    }
+
+    public int intValue(IntProp p) {
+      return p.defaultValue();
+    }
+
+    public int intValue(IntProp p, int defaultValue) {
+      return defaultValue;
+    }
+
+    public String stringValue(StringProp p) {
+      return p.defaultValue();
+    }
+
+    public String stringValue(StringProp p, String defaultValue) {
+      return defaultValue;
+    }
+
+    public boolean booleanValue(BooleanProp p) {
+      return p.defaultValue();
+    }
+
+    public boolean booleanValue(BooleanProp p, boolean defaultValue) {
+      return defaultValue;
+    }
+
+    public double doubleValue(DoubleProp p) {
+      return p.defaultValue();
+    }
+
+    public double doubleValue(DoubleProp p, double defaultValue) {
+      return defaultValue;
+    }
+  }
+
   /** Types of validation that can be performed on a resource. */
   public enum Validation {
     /** Checks that each method's resource key corresponds to a resource in the
@@ -553,20 +834,30 @@ public class Resources {
 
   /** The message in the default locale. */
   @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
   public @interface BaseMessage {
     String value();
   }
 
   /** The name of the property in the resource file. */
   @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
   public @interface Resource {
     String value();
   }
 
   /** Property of a resource. */
   @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
   public @interface Property {
     String name();
+    String value();
+  }
+
+  /** Default value of a property. */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
+  public @interface Default {
     String value();
   }
 
@@ -756,6 +1047,76 @@ public class Resources {
                 + Arrays.toString(argumentTypes)
                 + "' in class " + clazz, e);
       }
+    }
+  }
+
+  /** Implementation of {@link PropertyAccessor} that reads from a
+   * {@link Properties}. */
+  private static class PropertiesAccessor implements PropertyAccessor {
+    private final Properties properties;
+
+    PropertiesAccessor(Properties properties) {
+      this.properties = properties;
+    }
+
+    public boolean isSet(Prop p) {
+      return properties.containsKey(p.key);
+    }
+
+    public int intValue(IntProp p) {
+      final String s = properties.getProperty(p.key);
+      if (s != null) {
+        return Integer.parseInt(s, 10);
+      }
+      p.checkDefault2();
+      return p.defaultValue;
+    }
+
+    public int intValue(IntProp p, int defaultValue) {
+      final String s = properties.getProperty(p.key);
+      return s == null ? defaultValue : Integer.parseInt(s, 10);
+    }
+
+    public String stringValue(StringProp p) {
+      final String s = properties.getProperty(p.key);
+      if (s != null) {
+        return s;
+      }
+      p.checkDefault2();
+      return p.defaultValue;
+    }
+
+    public String stringValue(StringProp p, String defaultValue) {
+      final String s = properties.getProperty(p.key);
+      return s == null ? defaultValue : s;
+    }
+
+    public boolean booleanValue(BooleanProp p) {
+      final String s = properties.getProperty(p.key);
+      if (s != null) {
+        return Boolean.parseBoolean(s);
+      }
+      p.checkDefault2();
+      return p.defaultValue;
+    }
+
+    public boolean booleanValue(BooleanProp p, boolean defaultValue) {
+      final String s = properties.getProperty(p.key);
+      return s == null ? defaultValue : Boolean.parseBoolean(s);
+    }
+
+    public double doubleValue(DoubleProp p) {
+      final String s = properties.getProperty(p.key);
+      if (s != null) {
+        return Double.parseDouble(s);
+      }
+      p.checkDefault2();
+      return p.defaultValue;
+    }
+
+    public double doubleValue(DoubleProp p, double defaultValue) {
+      final String s = properties.getProperty(p.key);
+      return s == null ? defaultValue : Double.parseDouble(s);
     }
   }
 }

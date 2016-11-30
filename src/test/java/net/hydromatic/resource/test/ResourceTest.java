@@ -21,6 +21,7 @@ import org.junit.Test;
 import java.lang.reflect.Method;
 import java.util.EnumSet;
 import java.util.Locale;
+import java.util.Properties;
 
 import net.hydromatic.resource.Resources;
 
@@ -208,6 +209,359 @@ public class ResourceTest {
         equalTo((Class) IllegalStateException.class));
   }
 
+  @Test public void testIntPropEmpty() {
+    final FooResource r = Resources.create(FooResource.class);
+    final IntProp p = r.intPropNoDefault();
+    try {
+      final int actual = p.get();
+      fail("expected error, got " + actual);
+    } catch (RuntimeException e) {
+      assertThat(e.getMessage(),
+          is("Property IntPropNoDefault has no default value"));
+    }
+    assertThat(p.get(1), is(1));
+    assertThat(p.isSet(), is(false));
+  }
+
+  @Test public void testIntProp() {
+    final Properties properties = new Properties();
+    final FooResource r = Resources.create(properties, FooResource.class);
+
+    final IntProp p = r.intPropNoDefault();
+    final IntProp p5 = r.intPropDefaultFive();
+    assertThat(p.hasDefault(), is(false));
+    assertThat(p5.hasDefault(), is(true));
+
+    try {
+      final int actual = p.defaultValue();
+      fail("expected error, got " + actual);
+    } catch (NoDefaultValueException e) {
+      assertThat(e.getMessage(),
+          is("Property IntPropNoDefault has no default value"));
+    }
+    assertThat(p5.defaultValue(), is(-50));
+
+    try {
+      final int actual = p.get();
+      fail("expected error, got " + actual);
+    } catch (NoDefaultValueException e) {
+      assertThat(e.getMessage(),
+          is("Property IntPropNoDefault is not set and has no default value"));
+    }
+    assertThat(p.get(1), is(1));
+    assertThat(p.isSet(), is(false));
+
+    assertThat(p5.get(), is(-50));
+    assertThat(p5.get(1), is(1));
+    assertThat(p5.isSet(), is(false));
+
+    properties.setProperty("OtherProperty", "111");
+    assertThat(p.isSet(), is(false));
+    assertThat(p5.isSet(), is(false));
+
+    properties.setProperty("IntPropNoDefault", "3 ");
+    try {
+      final int actual = p.get();
+      fail("expected error, got " + actual);
+    } catch (NumberFormatException e) {
+      assertThat(e.getMessage(),
+          is("For input string: \"3 \""));
+    }
+    try {
+      final int actual = p.get(1);
+      fail("expected error, got " + actual);
+    } catch (NumberFormatException e) {
+      assertThat(e.getMessage(),
+          is("For input string: \"3 \""));
+    }
+    assertThat(p.isSet(), is(true));
+
+    properties.setProperty("IntPropNoDefault", "3");
+    assertThat(p.get(), is(3));
+    assertThat(p.get(1), is(3));
+    assertThat(p.isSet(), is(true));
+
+    properties.setProperty("IntPropDefaultFive", "-50");
+    assertThat(p5.get(), is(-50));
+    assertThat(p5.get(1), is(-50));
+    assertThat(p5.isSet(), is(true));
+  }
+
+  @Test public void testDoubleProp() {
+    final Properties properties = new Properties();
+    final FooResource r = Resources.create(properties, FooResource.class);
+
+    final DoubleProp p = r.doublePropNoDefault();
+    final DoubleProp pHalf = r.doublePropDefaultHalf();
+    assertThat(p.hasDefault(), is(false));
+    assertThat(pHalf.hasDefault(), is(true));
+
+    try {
+      final double actual = p.defaultValue();
+      fail("expected error, got " + actual);
+    } catch (NoDefaultValueException e) {
+      assertThat(e.getMessage(),
+          is("Property DoublePropNoDefault has no default value"));
+    }
+    assertThat(pHalf.defaultValue(), is(0.5d));
+
+    try {
+      final double actual = p.get();
+      fail("expected error, got " + actual);
+    } catch (NoDefaultValueException e) {
+      assertThat(e.getMessage(),
+          is("Property DoublePropNoDefault is not set and has no default "
+              + "value"));
+    }
+    assertThat(p.get(1d), is(1d));
+    assertThat(p.isSet(), is(false));
+
+    assertThat(pHalf.get(), is(0.5d));
+    assertThat(pHalf.get(1), is(1d));
+    assertThat(pHalf.isSet(), is(false));
+
+    properties.setProperty("OtherProperty", "111");
+    assertThat(p.isSet(), is(false));
+    assertThat(pHalf.isSet(), is(false));
+
+    // Trailing spaces are OK for parsing doubles
+    properties.setProperty("DoublePropNoDefault", "3 ");
+    assertThat(p.get(), is(3d));
+    assertThat(p.get(1), is(3d));
+    assertThat(p.isSet(), is(true));
+
+    properties.setProperty("DoublePropNoDefault", "3z");
+    try {
+      final double actual = p.get();
+      fail("expected error, got " + actual);
+    } catch (NumberFormatException e) {
+      assertThat(e.getMessage(),
+          is("For input string: \"3z\""));
+    }
+    try {
+      final double actual = p.get(1);
+      fail("expected error, got " + actual);
+    } catch (NumberFormatException e) {
+      assertThat(e.getMessage(),
+          is("For input string: \"3z\""));
+    }
+    assertThat(p.isSet(), is(true));
+
+    properties.setProperty("DoublePropNoDefault", "-3.25");
+    assertThat(p.get(), is(-3.25d));
+    assertThat(p.get(1), is(-3.25d));
+    assertThat(p.isSet(), is(true));
+
+    properties.setProperty("DoublePropDefaultHalf", "-8.50");
+    assertThat(pHalf.get(), is(-8.5d));
+    assertThat(pHalf.get(1), is(-8.5d));
+    assertThat(pHalf.isSet(), is(true));
+  }
+
+  @Test public void testBooleanProp() {
+    final Properties properties = new Properties();
+    final FooResource r = Resources.create(properties, FooResource.class);
+
+    final BooleanProp p = r.booleanPropNoDefault();
+    final BooleanProp pTrue = r.booleanPropDefaultTrue();
+    final BooleanProp pBad = r.booleanPropBadDefault();
+    assertThat(p.hasDefault(), is(false));
+    assertThat(pTrue.hasDefault(), is(true));
+    assertThat(pBad.hasDefault(), is(true));
+
+    try {
+      final boolean actual = p.defaultValue();
+      fail("expected error, got " + actual);
+    } catch (NoDefaultValueException e) {
+      assertThat(e.getMessage(),
+          is("Property BooleanPropNoDefault has no default value"));
+    }
+    assertThat(pTrue.defaultValue(), is(true));
+    assertThat(pBad.defaultValue(), is(false));
+
+    try {
+      final boolean actual = p.get();
+      fail("expected error, got " + actual);
+    } catch (NoDefaultValueException e) {
+      assertThat(e.getMessage(),
+          is("Property BooleanPropNoDefault is not set and has no default "
+              + "value"));
+    }
+    assertThat(p.get(true), is(true));
+    assertThat(p.get(false), is(false));
+    assertThat(p.isSet(), is(false));
+
+    assertThat(pTrue.get(), is(true));
+    assertThat(pTrue.get(false), is(false));
+    assertThat(pTrue.get(true), is(true));
+    assertThat(pTrue.isSet(), is(false));
+
+    assertThat(pBad.get(), is(false));
+    assertThat(pBad.get(true), is(true));
+    assertThat(pBad.get(false), is(false));
+    assertThat(pBad.isSet(), is(false));
+
+    properties.setProperty("OtherProperty", "111");
+    assertThat(p.isSet(), is(false));
+    assertThat(pTrue.isSet(), is(false));
+    assertThat(pBad.isSet(), is(false));
+
+    // Boolean properties are lenient in parsing.
+    // Everything that is not "true" or "TRUE" is false.
+    // Never throws.
+    properties.setProperty("BooleanPropNoDefault", "3 ");
+    assertThat(pBad.get(), is(false));
+    assertThat(pBad.get(true), is(true));
+    assertThat(p.isSet(), is(true));
+
+    properties.setProperty("BooleanPropNoDefault", "false");
+    assertThat(p.get(), is(false));
+    assertThat(p.get(false), is(false));
+    assertThat(p.get(true), is(false));
+    assertThat(p.isSet(), is(true));
+
+    properties.setProperty("BooleanPropDefaultTrue", "false");
+    assertThat(pTrue.get(), is(false));
+    assertThat(pTrue.get(true), is(false));
+    assertThat(pTrue.get(false), is(false));
+    assertThat(pTrue.isSet(), is(true));
+
+    properties.setProperty("BooleanPropDefaultTrue", "true");
+    assertThat(pTrue.get(), is(true));
+    assertThat(pTrue.get(true), is(true));
+    assertThat(pTrue.get(false), is(true));
+    assertThat(pTrue.isSet(), is(true));
+
+    properties.setProperty("BooleanPropBadDefault", "false");
+    assertThat(pBad.get(), is(false));
+    assertThat(pBad.get(true), is(false));
+    assertThat(pBad.get(false), is(false));
+    assertThat(pBad.isSet(), is(true));
+  }
+
+  @Test public void testStringProp() {
+    final Properties properties = new Properties();
+    final FooResource r = Resources.create(properties, FooResource.class);
+
+    final StringProp p = r.stringPropNoDefault();
+    final StringProp p5 = r.stringPropDefaultXyz();
+    assertThat(p.hasDefault(), is(false));
+    assertThat(p5.hasDefault(), is(true));
+
+    try {
+      final String actual = p.defaultValue();
+      fail("expected error, got " + actual);
+    } catch (NoDefaultValueException e) {
+      assertThat(e.getMessage(),
+          is("Property StringPropNoDefault has no default value"));
+    }
+    assertThat(p5.defaultValue(), is("xyz"));
+
+    try {
+      final String actual = p.get();
+      fail("expected error, got " + actual);
+    } catch (NoDefaultValueException e) {
+      assertThat(e.getMessage(),
+          is("Property StringPropNoDefault is not set and has no default "
+              + "value"));
+    }
+    assertThat(p.get(""), is(""));
+    assertThat(p.get("a b"), is("a b"));
+    assertThat(p.isSet(), is(false));
+
+    assertThat(p5.get(), is("xyz"));
+    assertThat(p5.get("a b"), is("a b"));
+    assertThat(p5.isSet(), is(false));
+
+    properties.setProperty("OtherProperty", "111");
+    assertThat(p.isSet(), is(false));
+    assertThat(p5.isSet(), is(false));
+
+    properties.setProperty("StringPropNoDefault", "3 ");
+    assertThat(p.get(), is("3 "));
+    assertThat(p.isSet(), is(true));
+
+    properties.setProperty("StringPropNoDefault", "3 ");
+    assertThat(p.get(), is("3 "));
+    assertThat(p.get("1"), is("3 "));
+    assertThat(p.isSet(), is(true));
+
+    properties.setProperty("StringPropDefaultXyz", "-50");
+    assertThat(p5.get(), is("-50"));
+    assertThat(p5.get("1"), is("-50"));
+    assertThat(p5.isSet(), is(true));
+  }
+
+  @Test public void testPropPath() {
+    final Properties properties = new Properties();
+    final FooResource r = Resources.create(properties, FooResource.class);
+
+    final IntProp p = r.intPropPathDefault();
+    assertThat(p.hasDefault(), is(true));
+
+    assertThat(p.defaultValue(), is(56));
+
+    assertThat(p.get(), is(56));
+    assertThat(p.get(1), is(1));
+    assertThat(p.isSet(), is(false));
+
+    properties.setProperty("OtherProperty", "111");
+    assertThat(p.isSet(), is(false));
+
+    // Setting its method name has no effect
+    properties.setProperty("IntPropPathDefault", "3");
+    assertThat(p.get(), is(56));
+    assertThat(p.get(1), is(1));
+    assertThat(p.isSet(), is(false));
+
+    properties.setProperty("com.example.my.int.property", "3");
+    assertThat(p.get(), is(3));
+    assertThat(p.get(1), is(3));
+    assertThat(p.isSet(), is(true));
+
+    properties.setProperty("com.example.my.int.property", "3 ");
+    try {
+      final int actual = p.get();
+      fail("expected error, got " + actual);
+    } catch (NumberFormatException e) {
+      assertThat(e.getMessage(),
+          is("For input string: \"3 \""));
+    }
+    try {
+      final int actual = p.get(1);
+      fail("expected error, got " + actual);
+    } catch (NumberFormatException e) {
+      assertThat(e.getMessage(),
+          is("For input string: \"3 \""));
+    }
+    assertThat(p.isSet(), is(true));
+  }
+
+  @Test public void testBadDefaultProp() {
+    final Properties properties = new Properties();
+
+    final BadIntResource r =
+        Resources.create(properties, BadIntResource.class);
+    try {
+      final IntProp p = r.intPropBadDefault();
+      fail("expected error, got " + p);
+    } catch (NumberFormatException e) {
+      assertThat(e.getMessage(),
+          is("For input string: \"a3\""));
+    }
+
+    final BadDoubleResource r2 =
+        Resources.create(properties, BadDoubleResource.class);
+    try {
+      final DoubleProp p = r2.doublePropBadDefault();
+      fail("expected error, got " + p);
+    } catch (NumberFormatException e) {
+      assertThat(e.getMessage(),
+          is("For input string: \"1.5xx\""));
+    }
+
+  }
+
   // TODO: check that each resource in the bundle is used by precisely
   //  one method
 
@@ -299,6 +653,44 @@ public class ResourceTest {
 
     @BaseMessage("super chain exception")
     MyExInstImpl exceptionSuperChain();
+
+    IntProp intPropNoDefault();
+
+    @Default("-50")
+    IntProp intPropDefaultFive();
+
+    @Default("56")
+    @Resource("com.example.my.int.property")
+    IntProp intPropPathDefault();
+
+    StringProp stringPropNoDefault();
+
+    @Default("xyz")
+    StringProp stringPropDefaultXyz();
+
+    BooleanProp booleanPropNoDefault();
+
+    @Default("true")
+    BooleanProp booleanPropDefaultTrue();
+
+    @Default("null")
+    BooleanProp booleanPropBadDefault();
+
+    DoubleProp doublePropNoDefault();
+
+    @Default("0.5")
+    DoubleProp doublePropDefaultHalf();
+
+  }
+
+  interface BadIntResource {
+    @Default("a3")
+    IntProp intPropBadDefault();
+  }
+
+  interface BadDoubleResource {
+    @Default("1.5xx")
+    DoubleProp doublePropBadDefault();
   }
 }
 
