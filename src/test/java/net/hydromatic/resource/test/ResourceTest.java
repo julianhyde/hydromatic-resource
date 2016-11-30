@@ -151,8 +151,7 @@ public class ResourceTest {
   @Test public void testValidateCauselessFail() {
     try {
       fooResource.causelessFail().validate(
-          EnumSet.of(Validation.CREATE_EXCEPTION)
-      );
+          EnumSet.of(Validation.CREATE_EXCEPTION));
       fail("should have thrown");
     } catch (AssertionError e) {
       assertThat(e.getMessage(),
@@ -166,8 +165,7 @@ public class ResourceTest {
 
   @Test public void testValidateExceptionWithCause() {
     fooResource.exceptionWithCause().validate(
-        EnumSet.of(Validation.CREATE_EXCEPTION)
-    );
+        EnumSet.of(Validation.CREATE_EXCEPTION));
   }
 
   @Test public void testValidateMatchArguments() {

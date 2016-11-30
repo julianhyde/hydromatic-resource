@@ -179,7 +179,6 @@
           <links>
             <link>http://docs.oracle.com/javase/8/docs/api/</link>
           </links>
-          <excludePackageNames>org.apache.calcite.sql.parser.impl</excludePackageNames>
           <tags>
             <tag>
               <name>goal</name>

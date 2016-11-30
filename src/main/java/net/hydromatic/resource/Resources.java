@@ -388,8 +388,7 @@ public class Resources {
         boolean causeInConstructor = false;
         try {
           constructor = exceptionClass.getConstructor(String.class,
-              Throwable.class
-          );
+              Throwable.class);
           causeInConstructor = true;
         } catch (NoSuchMethodException nsmStringThrowable) {
           try {
@@ -663,8 +662,7 @@ public class Resources {
                 return ClassLoader.getSystemResourceAsStream(resName);
               }
             }
-          }
-      );
+          });
     }
 
     public Enumeration<String> getKeys() {
