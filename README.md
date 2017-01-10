@@ -116,7 +116,7 @@ Get hydromatic-resource from
 
 ### Download and build
 
-You need Java (1.6 or higher; 1.8 preferred), git and maven (3.2.1 or later).
+You need Java (1.6 or higher; 9 preferred), git and maven (3.2.1 or later).
 
 ```bash
 $ git clone git://github.com/julianhyde/hydromatic-resource.git
